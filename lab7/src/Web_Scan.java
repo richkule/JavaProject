@@ -1,9 +1,11 @@
 import java.io.*;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * Класс реализующий сканер Веб-Страниц
+ * Класс запускающий сканер Веб-Страниц
  *
  */
 public class Web_Scan {
@@ -17,10 +19,11 @@ public class Web_Scan {
  */
 	public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException, SQLException 
 	{
-		String test = "http://www.777gid.ru/p/blog-page_30.html";
-		Crawler crawl = new Crawler(test, 1);
+		//http://www.777gid.ru/p/blog-page_30.html
+		String url = args[0];
+		int depth = Integer.parseInt(args[1]);
+		Crawler crawl = new Crawler(url, depth);
 		crawl.startMultiThreadCrawl(5);
-		
  	}
 
 }

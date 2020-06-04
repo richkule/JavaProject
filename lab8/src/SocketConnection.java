@@ -25,7 +25,7 @@ public class SocketConnection
 	/**
 	 * Время ожидания ответа от сервара в мс.
 	 */
-	private final int READ_TIMEOUT = 20000;
+	private int timedout;
 	/**
 	 * Порт по которому идет соединение
 	 */
@@ -59,27 +59,30 @@ public class SocketConnection
 	 * Конструктор работающий с объектом URLDepthPair
 	 * @param url - Объект URLDepthPair, содержащий данные о подключения к сайту
 	 */
-	public SocketConnection(URLDepthPair url)
+	public SocketConnection(URLDepthPair url, int timedout)
 	{
 		this.domain = url.domain;
 		this.path = url.path;
+		this.timedout = timedout;
 	}
 	/**
 	 * @param domain - Доменное имя
 	 * @param path - Путь до файла без доменного имени
 	 */
-	public SocketConnection(String domain, String path)
+	public SocketConnection(String domain, String path, int timedout)
 	{
 		this.domain = domain;
 		this.path = path;
+		this.timedout = timedout;
 	}
 	/**
 	 * @param domain - Доменное имя
 	 */
-	public SocketConnection(String domain)
+	public SocketConnection(String domain, int timedout)
 	{
 		this.domain = domain;
 		this.path = "/";
+		this.timedout = timedout;
 	}
 	/**
 	 * Метод подключения к серверу
@@ -90,7 +93,7 @@ public class SocketConnection
 		try
 		{
 			this.sock = new Socket(domain,CONNECTION_PORT);
-			sock.setSoTimeout(READ_TIMEOUT);
+			sock.setSoTimeout(timedout);
 			OutputStream os = sock.getOutputStream();
 			this.pw = new PrintWriter(os,true);
 			InputStream is = sock.getInputStream();

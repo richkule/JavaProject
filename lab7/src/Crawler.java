@@ -86,7 +86,7 @@ public class Crawler
 
 	}
 	/**
-	 *  ласс  потока
+	 *  ласс потока, при его инициализации начинаетс€ сканирование в отдельном потоке
 	 */
 	public class MyRunnable implements Runnable {
 
@@ -175,6 +175,7 @@ public class Crawler
 			if (urlpair.depth<=maxDepth) 
 			{
 				if(readURL(urlpair)) checkedList.addLast(urlpair);
+				System.out.println(urlpair.url + " " + urlpair.depth);
 			}
 			else noneCheckedList.add(urlpair);
 		}
@@ -186,9 +187,9 @@ public class Crawler
  * @throws IOException
  * @throws SQLException 
  */
+	@SuppressWarnings("finally")
 	private boolean readURL(URLDepthPair urlpair) throws IOException
 	{
-		System.out.println(urlpair.url);
 		InfoURL info = allURL.get(urlpair.url);
 		SocketConnection conn = new SocketConnection(urlpair);
 		// вернуть false, если соединение неудачно
@@ -196,18 +197,25 @@ public class Crawler
 		conn.sendGET();
 		if (conn.code.equals("200"))
 		{
-			String line;
-			BufferedReader br = conn.br;
-			while (!(line = br.readLine()).equals("0")) 
+			try
 			{
-				// ≈сли строка содержит url, то увеличить количество ссылок
-				if (ParseNewURL(line,urlpair)) info.addHref();
-				info.readLine(line);
-		    }
-			db.writeDB(info);
-			conn.close();
-			return true;
-			
+				String line;
+				BufferedReader br = conn.br;
+				while (!(line = br.readLine()).equals("0")) 
+				{
+					// ≈сли строка содержит url, то увеличить количество ссылок
+					if (ParseNewURL(line,urlpair)) info.addHref();
+					info.readLine(line);
+			    }
+				db.writeDB(info);
+				conn.close();
+				return true;
+			}
+			finally
+			{
+				conn.close();
+				return false;
+			}
 		}
 		// ≈сли код ответа, не равен 200(OK)
 		else return false;
@@ -295,7 +303,7 @@ public class Crawler
 	 * ћетод возвращающий информацию о всех сайтах
 	 * @return - HashMap<String,InfoURL> содержащий информацию о всех найденных сайтах
 	 */
-	public HashMap<String,InfoURL> getInfo()
+	public HashMap<String,InfoURL> getInfos()
 	{
 		return this.allURL;
 	}

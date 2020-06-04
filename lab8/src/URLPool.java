@@ -2,7 +2,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingDeque;
-
+/**
+ * Класс, работающий с найденными URL адресами
+ */
 public class URLPool {
 	/**
 	 * Количество ожидающих потоков
@@ -93,10 +95,4 @@ public class URLPool {
 		}
 		return unCheckedList.pollFirst();
 	}
-
-
-	
-	
-	
-	
 }

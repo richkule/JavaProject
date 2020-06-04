@@ -3,10 +3,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,6 +12,10 @@ import java.util.regex.Pattern;
  */
 public class Crawler 
 {
+	/**
+	 * Время ожидания запроса от сервера в мс
+	 */
+	public int timedout;
 	/**
 	 * Пул, в котором содержиться все используемые и найденные адреса
 	 */
@@ -54,8 +54,9 @@ public class Crawler
 	 * @throws UnknownHostException 
 	 * @throws ClassNotFoundException 
 	 */
-	public Crawler(String url, int maxDepth) throws UnknownHostException, IOException, ClassNotFoundException, SQLException
+	public Crawler(String url, int maxDepth, int timedout) throws UnknownHostException, IOException, ClassNotFoundException, SQLException
 	{
+		this.timedout = timedout;
 		URLDepthPair urlpair = new URLDepthPair(url,0);
 		urlPool = new URLPool();
 		urlPool.addURL(urlpair);
@@ -125,10 +126,10 @@ public class Crawler
 	private void startCrawl() throws IOException, InterruptedException
 	{
 		URLDepthPair urlpair = urlPool.getURL();
-		System.out.println(urlpair.url);
 		if (urlpair.depth<=maxDepth) 
 		{
 			if(readURL(urlpair)) urlPool.addCheckedURL(urlpair);
+			System.out.println(urlpair.url + " " + urlpair.depth);
 		}
 		else urlPool.addNoneCheckedURL(urlpair);
 	}
@@ -139,10 +140,11 @@ public class Crawler
  * @throws IOException
  * @throws SQLException 
  */
+	@SuppressWarnings("finally")
 	private boolean readURL(URLDepthPair urlpair) throws IOException
 	{
 		InfoURL info = urlPool.getInfo(urlpair);
-		SocketConnection conn = new SocketConnection(urlpair);
+		SocketConnection conn = new SocketConnection(urlpair,timedout);
 		// вернуть false, если соединение неудачно
 		if (!conn.connect()) return false;
 		conn.sendGET();

@@ -7,7 +7,6 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Класс осуществляющий работу с http запросами с помощью сокета
@@ -119,15 +118,23 @@ public class SocketConnection
 		getCode();
 	}
 	/**
-	 * Метод, получающий заголовки ответа
+	 * Метод, получающий код ответа
 	 * @throws IOException 
 	 */
 	private void getCode() throws IOException
 	{
-		String line = br.readLine();
-		code = line.substring(PROTOCOL.length()+1,PROTOCOL.length()+4);
-		// "Пролистываем не нужные html заголовки"
-		while (!(line = br.readLine()).equals(""));
+		try
+		{
+			String line = br.readLine();
+			code = line.substring(PROTOCOL.length()+1,PROTOCOL.length()+4);
+			// "Пролистываем не нужные html заголовки"
+			while (!(line = br.readLine()).equals(""));
+		}
+		catch(java.net.SocketTimeoutException e)
+		{
+			code = "ReadTimedOut";
+		}
+
 	}
 	/**
 	 * Метод закрывающий соединение с сокетом

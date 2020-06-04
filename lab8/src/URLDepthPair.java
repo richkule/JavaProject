@@ -18,15 +18,19 @@ public class URLDepthPair
 	 */
 	public static final int HREF_TOEND = 1;
 	/**
-	 * HTML расширение
+	 * Расширение html файла
 	 */
 	public static final String HTML_EXTENSION = ".html";
+	/**
+	 * Допустимые расширения
+	 */
+	public static final String ACCEPTABLE_EXTENSION_PATTERN = "(.html?)|(.php)";
 	/**
 	 * Префикс доступа к URL HTTP
 	 */
 	public static final String URL_PREFIX_HTTP = "http://";
 	/**
-	 * Шаблон регулярных выражений, необходиый для поиска префиксов http:// https:// 
+	 * Шаблон регулярных выражений, необходиый для поиска префиксов http://
 	 */
 	public static final String PREFIX_PATTERN = "(http://)";
 	/**
@@ -45,6 +49,30 @@ public class URLDepthPair
 	 * Шаблон регулярных выражений, соответствующий url строке
 	 */
 	public static final String URL_PATTERN = PREFIX_PATTERN+DOMAIN_PATTERN+PATH_PATTERN;
+	/**
+	 * Скомплированный шаблон допустимых расширений
+	 */
+	public  final Pattern ACCEPTABLE_EXTENSION_PATTERN_COMPILE = Pattern.compile(ACCEPTABLE_EXTENSION_PATTERN);
+	/**
+	 * Скомпилированный шаблон регулярных выражений, необходиый для поиска префиксов http://
+	 */
+	public  final Pattern PREFIX_PATTERN_COMPILE = Pattern.compile(PREFIX_PATTERN);
+	/**
+	 * Скомпилированный шаблон регулярных выражения соответствующий доменным именам
+	 */
+	public  final Pattern DOMAIN_PATTERN_COMPILE = Pattern.compile(DOMAIN_PATTERN);
+	/**
+	 * Скомпилированный шаблон регулярных выражений, соответсвующий путям до файла
+	 */
+	public  final Pattern PATH_PATTERN_COMPILE = Pattern.compile(PATH_PATTERN);
+	/**
+	 * Скомпилированный шаблон  регулярных выражений, возвращающий расширение файла
+	 */
+	public  final Pattern EXTENSION_PATTERN_COMPILE = Pattern.compile(EXTENSION_PATTERN);
+	/**
+	 * Скомпилированный шаблон регулярных выражений, соответствующий url строке
+	 */
+	public  final Pattern URL_PATTERN_COMPILE = Pattern.compile( URL_PATTERN);
 	/**
 	 * Переменная содержащая url
 	 */
@@ -73,9 +101,9 @@ public class URLDepthPair
 	 */
 	public URLDepthPair(String url, int depth) throws MalformedURLException
 	{
-		if (testURL(url)) this.url= url;
-		else this.url = searchPattern(url,URL_PATTERN); 
-		Pattern p = Pattern.compile(DOMAIN_PATTERN);
+		if (URL_PATTERN_COMPILE.matcher(url).matches()) this.url= url;
+		else this.url = searchPattern(url,URL_PATTERN_COMPILE); 
+		Pattern p = this.DOMAIN_PATTERN_COMPILE;
 		Matcher m = p.matcher(this.url);
 		m.find();
 		this.domain = this.url.substring(m.start(),m.end());
@@ -97,8 +125,8 @@ public class URLDepthPair
 		// Если строка содержит полную URL ссылку
 		try
 		{
-			this.url = searchPattern(hrefContent,URL_PATTERN);
-			Pattern p = Pattern.compile(DOMAIN_PATTERN);
+			this.url = searchPattern(hrefContent,URL_PATTERN_COMPILE);
+			Pattern p = this.DOMAIN_PATTERN_COMPILE;
 			Matcher m = p.matcher(this.url);
 			m.find();
 			this.domain = this.url.substring(m.start(),m.end());
@@ -111,8 +139,8 @@ public class URLDepthPair
 		catch (MalformedURLException e)
 		{
 			// Проверка правильности домена
-			if (!Pattern.matches(DOMAIN_PATTERN,domain)) throw new MalformedURLException("Wrong URL");
-			hrefContent = searchPattern(hrefContent,PATH_PATTERN);
+			if (!DOMAIN_PATTERN_COMPILE.matcher(domain).matches()) throw new MalformedURLException("Wrong URL");
+			hrefContent = searchPattern(hrefContent,PATH_PATTERN_COMPILE);
 			if (hrefContent.isEmpty()) throw new MalformedURLException("Wrong URL");
 			if (hrefContent.charAt(0) != '/') hrefContent = "/"+hrefContent;
 			this.url = URL_PREFIX_HTTP+domain+hrefContent;
@@ -122,23 +150,16 @@ public class URLDepthPair
 			checkExtension();
 		}
 	}
+
 	/**
-	 * Метод проверки является ли строка адресом url
-	 * @param url - Проверяемая строка
-	 */
-	public boolean testURL(String url)
-	{
-		return Pattern.matches(URL_PATTERN, url);
-	}
-	/**
-	 * Метод поиска URL во входящей строке
+	 * Метод поиска подстроки соответствующей шаблону
 	 * @param url - входная строка
+	 * @param pattern - искомый шаблон
 	 * @return String - найденная подстрока, содержащая url, иначе null
 	 * @throws MalformedURLException - Данная строка не содержит url
 	 */
-	public String searchPattern(String url,String pattern) throws MalformedURLException
+	public String searchPattern(String url,Pattern p) throws MalformedURLException
 	{
-		Pattern p = Pattern.compile(pattern);
 		Matcher m = p.matcher(url);
 		try
 		{
@@ -152,14 +173,14 @@ public class URLDepthPair
 	}
 	/**
 	 * Метод проверки на то, что расширение файла на конце найденного url
-	 * или отсутствует или является html расширением
+	 * или отсутствует или является допустимым, в противном случае выдает ошибку
 	 * @throws MalformedURLException 
 	 */
 	private void checkExtension() throws MalformedURLException
 	{
 		String extension = null;
 		try {
-			 extension = searchPattern(path,EXTENSION_PATTERN);
+			 extension = searchPattern(path,EXTENSION_PATTERN_COMPILE);
 		} 
 		catch (MalformedURLException e) 
 		{
@@ -167,9 +188,8 @@ public class URLDepthPair
 		}
 		finally
 		{
-			if (!extension.equals(HTML_EXTENSION)) throw new MalformedURLException("Wrong extension");
+			if (!ACCEPTABLE_EXTENSION_PATTERN_COMPILE.matcher(extension).matches()) throw new MalformedURLException("Wrong extension");
 		}
-		
 	}
 	@Override
 	public int hashCode()
